@@ -1,0 +1,130 @@
+---
+title: 'Rapport de l''exercice 2 du TP1 de statistique exploratoire : Analyse en Composane
+  Principales'
+author: "Rémy Gaudré"
+date: "23/09/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+```
+
+## Question 1 : Quels renseignements peut-on déduire du tableau des statistique sommaires ?
+```{r}
+donnees = read.csv("notes_eleves.csv",header = TRUE,sep=";", dec=",")
+
+# Statistiques Descriptives
+describe(donnees[-1])
+```
+On note que toutes les données sont de la même nature. Les variables sont quantitatives : ce sont des notes de contrôle. Elles sont comprisent entre 0 et 20.
+```{r include=FALSE}
+library(Hmisc)
+```
+# Question 2 : Relevez les coefficient de corrélation les plus importants.
+```{r}
+# Matrice des corrélation et P-values
+rcorr(as.matrix(donnees[-1]))
+```
+Celon la p-value (si la p-value < 0.05, la corélation est considérée significative) : 
+
+* Les notes d'Orthographe sont corrélées avec les notes de Grammaire, d'Expression écrite, d'Anglais, et d'Histoire.
+* Les notes de Grammaire sont corrélées avec les notes de Grammaire et d'Anglais.
+* Les notes d'Expression écrite sont aussi corrélées avec les notes d'Orthographe, de Mathématique, d'Anglais, d'Histoire, de Biologie, d'éducation musicale, et d'art plastique.
+* Les notes de Récitation sont corrélées avec les notes d'éducation musicale.
+* Les notes de Mathématique sont corrélées avec les notes d'Expression écrite, d'Anglais, d'Histoire, et d'Exposé.
+* Les notes d'Anglais sont corrélées avec les notes d'Orthographe, de Grammaire, d'Expression écrite, de Mathématique et d'Histoire.
+* Les notes d'Histoire sont corrélées avec les notes d'Orthographe, d'Expression écrite, de Mathématique et d'Anglais.
+* Les notes de Biologie sont corrélées avec les notes d'Expression écrite, d'éducation musicales, d'Art plastique et de Géographie.
+* Les notes d'éducation musicale sont corrélées avec les notes d'Expression écrite, de Récitation, de Biologie, d'Art Plastique, et d'Exposé.
+* Les notes d'Art Plastique sont corrélées avec les notes d'Expression écrite, de Biologie, d'éducation musicale, et d'Exposé.
+* Les notes de Géographie sont corrélées avec les notes d'Expression écrite, de Biologie.
+* Les notes d'Exposé sont corrélées avec les notes de Mathématique, de Biologie, d'éducation musicale et d'Art plastique.
+* Les notes de technologie et d'EPS ne sont pas corrélées signicativement avec d'autres variables.  
+
+# Question 3 : Réaliser l'ACP
+```{r include=FALSE}
+library(FactoMineR)
+```
+```{r}
+# ACP
+donnees.pca = PCA(donnees[-1],scale.unit=TRUE,ncp=4,graph=FALSE)
+```
+# Question 4 : Combien de composantes principales peut-on retenir ?
+```{r}
+# Nombre de composantes principales
+donnees.pca$eig
+
+barplot(donnees.pca$eig[, 2], 
+        names.arg = 1:nrow(donnees.pca$eig), 
+        main = "La variances expliquée pas les composantes principales (%)",
+        xlab = "Composantes Principales",
+        ylab = "Pourcentage de la variance",
+        col ="steelblue")
+
+```
+  
+D'après le critère des 80% de variance expliquée : nous avons 6 composantes principales à retenir.  
+Le critère du coude n'est pas vraiment applicable ici, car la pente la plus importante est juste après le premier axe, donc on garderait qu'un seul axe.  
+D'après le critère de Kaiser, nous avons 5 composantes principales à retenir.
+
+
+# Question 5 : Interprétez les trois premiers axes par rapport aux disciplines enseignées.
+```{r}
+## Contributions
+donnees.pca$var$contrib
+```
+D'après le critère de la contribution moyenne (ici 7.14%), une variable est considéré comme contributive significativement à un axe lorsque sa contribution est supérieure à 7.14%.
+
+* Sur la première composante principale, les notes d'Orthographe, d'Expression écrite, de Mathématique, d'Anglais, d'Histoire, de Biologie, d'éducation musicale, et d'Art Plastique ont une contribution supérieure à la moyenne.
+* Sur la seconde composante principale, les notes d'Orthographe, de Grammaire, de récitation, d'Anglais, d'éducation musicale, de Technologie, et d'EPS ont une contribution supérieur à la moyenne.
+* Sur la troisième composante principale, les notes de récitation, de Technologie, d'EPS, de Géographie et d'Exposé ont une contribution significative.  
+
+```{r}
+## Qualité de représentation (cos²)
+donnees.pca$var$cos2
+```
+Une variable est considéré comme bien représenté sur un axe à partir d'un cos² > 0.5 et très bien représenté à partir d'un cos² > 0.7.
+
+* Sur la première composante principale, les notes d'Expression sont très bien représentés. Les notes de Mathématique et d'Art plastique sont bien représentés.
+* Sur la seconde composante principale, les notes de recital sont les mieux représentées avec 35%.
+* Sur la troisième composante principale, les notes d'EPS sont les mieux représentées avec 36%.
+
+```{r}
+## Coordonnées
+donnees.pca$var$coord
+```
+
+* Les notes d'Orthographe, d'Expression écrite, de Mathématique, d'Anglais, d'Histoire, de Biologie, d'éducation musicale, et d'Art Plastique ont sont toutes corrélées positivement sur la première composante principale.
+* Sur la seconde composante principale, les notes d'Orthographe, de Grammaire, d'Anglais,  sont inversement corrélées aux notes de Récitation, d'éducation musicale, de Technologie, et d'EPS.
+* Sur la troisième composante principale, les notes de Récitation, de Technologie et d'Exposé sont inversement corrélées aux notes d'EPS et de Géographie.
+
+# Question 6 : Quel phénomènes peut-on déduire du cercle des corrélations formé par les deux premiers facteurs. Quelles sont les disciplines les mieux représentées dans ce plan ?
+```{r}
+## Cercle des corrélations formé par les deux premiers facteurs
+plot(donnees.pca, axes=c(1,2),choix = "var")
+```
+
+On remarque au premier coup d'oeil que les variables sont toutes positivement corrélées sur la première composante. On remarque aussi qu'une bonne majorité de l'information est représentée par ces 2 axes comme les flèches atteignent au moins ou presque le demi-rayon. On observe aussi 2 groupes de variables se comportant de la même façon sur ces 2 premiers axes : éducation musicale, Exposé, Géographie, Biologie et Art plastique sont corrélées positivement sur les 2 axes, tandis que Mathématique, Histoire, Orthographe, Grammaire et Anglais sont corrélées positivement sur le premier axe et négativement sur le second. 
+Les disciplines les mieux représentées dans ce plan sont Education Musicale, Art Plastique, Expression écrite, Mathématique, Histoire, Orthographe et Anglais.
+
+# Question 7 : Que peut-on déduire de ce phénomène pour les 27 élèves de cette classe de 6ème ?
+D'après ces 2 groupes de matières en général, plus un élève est bon en Math, en Histoire en Orthographe et en Anglais, moins il est bon en éducation musicale, en Exposé, en Géographie, en Art Plastique et en Biologie et inversement.
+
+# Question 8 : Interprétez les contributions des élèves EL10 et EL12 par rapports aux axes factoriels 1 et 2.
+```{r}
+## Contribution des individus
+donnees.pca$ind$contrib
+```
+La contribution moyenne des individus est de 100/27 = 3.704. La contribution de EL10 à l'axe 1 est de 18.5884 soit plus de 5 fois la contribution moyenne. La contribution de EL12 à l'axe 1 est de 20.9859 soit plus de 5 fois la contribution moyenne aussi. Les élèves EL10 et EL12 contribuent donc beaucoup à l'axe 1.
+La contribution de EL10 à l'axe 2 est de 7.2253 soit presque 2 fois la contribution moyenne. La contribution de EL12 à l'axe 2 est de 0.0023 soit très inférieur à la moyenne. L'élève EL10 a donc plus contribué à la construction de l'axe 2 de l'ACP que l'élève EL12.
+
+# Question 9 : Quels sont les élèves parmis les 27 qui expliquent les axes 1,2 et 3 ?
+Les élèves EL01, EL09, EL10, EL12, EL21 et EL21 expliquent le premier axe.
+Les élèves EL01, EL02, EL10, EL13, EL16, EL17, EL19, EL21, EL22, EL23 et EL26 expliquent le second axe.
+Les élèves EL03, EL04, EL07, EL13, EL20, EL23, EL24 et EL25 explique le troisième axe.
+
+# Question 10 : Faites un résumé des résultats de l'ACP. Peut-on dégager des tendances quant aux matières enseignées dans cette classe.
+On peut distinguer 2 groupes de disciplines enseignées dans cette école selon les résultats qu'ont obtenu les élèves. Le premier groupe est composé de : Technologie, EPS, Récitation, Exposé, Géographie, Education Musicale, Art Plastique, et Biologie. Le second groupe est quant à lui composé de : Mathématique, Histoire, Orthographe, Anglais et Grammaire. L'expression écrite est une disciple qui se trouve entre les deux groupes. Les deux groupes sont corrélés positivement selon la première composante principale. C'est à dire que si un élève a eu quelques bonnes notes, le reste des notes a tendance à être bon aussi et inversement. Maintenant la seconde composante principale nous indique 2 groupes de notes principaux. Cela nous montre que certaines disciplines ont plus de chance d'avoir des notes similaires. L'élève EL10 qui a beaucoup contribué à ces deux premiers axes confirme ces tendances : il a de très bonnes notes dans un premier groupe de discipline : 20 en Orthographe, 14.5 en Grammaire, 18 en Mathématique, 15 en Histoire, et 16.5 en Anglais. Il a aussi un très bon résultat en Expression écrite : 16.5. Les notes du second groupe de discipline reste au dessus de la moyenne donc bonnes mais pas aussi biens : 10 en Récitation, 13.5 en Art plastique, 10.5 en Biologie, 13 en Geographie, 12 en Technologie et 15 en Exposé. Cet exemple a beaucoup contribué aux 2 premiers axes parce qu'il représente bien ce que les axes décrivent.  
+On note aussi que les notes de Géographie et d'EPS ont leur meilleure représentation sur la troisième composante principale, et ces disciplines sont corrélées positivement entre elles sur cette axe. Elles sont cependant inversement corrélées aux notes de Récitation, de Technologie et d'Exposé. Ce comportement reste moins important que ceux décris par les deux premiers axes.

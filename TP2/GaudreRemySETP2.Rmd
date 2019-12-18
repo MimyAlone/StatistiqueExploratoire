@@ -1,0 +1,104 @@
+---
+title: 'Rapport de l''exercice 2 du TP2 de statistique exploratoire : Analyse en Composane
+  Principales'
+author: "Rémy Gaudré"
+date: "07/10/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(psych)
+library(FactoMineR)
+```
+
+## Question 1 : Importer la base de données sous R
+```{r}
+donnees = read.csv("cesp.csv",header = TRUE,sep=";", dec=",")
+row.names(donnees)=donnees[,1]
+```
+
+## Question 2 : Mettre en oeuvre l'AFC en utilisant les lignes actives pour le calcul des valeurs et vecteurs propres.
+```{r}
+donnees.ca = CA(donnees[,-1],graph = FALSE, row.sup = 9:19)
+```
+Tableau des vecteurs propres aux lignes actives
+```{r}
+donnees.ca$svd$U
+```
+
+Tableau des vecteurs propres aux colonnes actives
+```{r}
+donnees.ca$svd$V
+```
+
+## Question 3 : Combien d'axes peut-on retenir et pourquoi ?
+```{r}
+donnees.ca$eig
+barplot(donnees.ca$eig[, 2], 
+        names.arg = 1:nrow(donnees.ca$eig), 
+        main = "La variances expliquée pas les composantes principales (%)",
+        xlab = "Composantes Principales",
+        ylab = "Pourcentage de la variance",
+        col ="steelblue")
+mean(donnees.ca$eig[, 1])
+```
+D'après le critère des 80% de variance expliquée : nous avons 2 composantes principales à retenir.  
+Le critère du coude nous donne aussi 2 composantes à retenir.  
+D'après le critère de Kaiser, nous avons aussi 2composantes principales à retenir (Moyenne des valeurs propres = 0.0045).
+
+## Question 4 : Desser les tableaux des Poids, Distances, Coordonnées, Contributions et Cosinus carrés sur les trois premiers axes :
+Poids des lignes
+```{r}
+donnees.ca$call$marge.row
+```
+
+Poids des colonnes
+```{r}
+donnees.ca$call$marge.col
+```
+### a. Des colonnes actives
+```{r}  
+donnees.ca$col$coord[,1:3]
+donnees.ca$col$cos2[,1:3]
+donnees.ca$col$contrib[,1:3]
+```
+### b. des lignes actives
+```{r}
+donnees.ca$row$coord[,1:3]
+donnees.ca$row$cos2[,1:3]
+donnees.ca$row$contrib[,1:3]
+```
+### c. des lignes illustratives (supplémentaires)
+```{r}
+donnees.ca$row.sup$coord[,1:3]
+donnees.ca$row.sup$cos2[,1:3]
+```
+## Question 5 : Interpréter les axes retenus à la question 3
+Sur l'axe 1 : Les quotidient Régionaux et Nationaux sont les colonnes contribuant le plus à la création du premier axe. La télévision et les quotidiens Nationaux sont très bien représenté sur la première composante. Les quotidiens Régionnaux sont bien représentés sur la première composante. Les quotidiens Nationaux sont inversement corrélés à la télévision et aux quotidiens régionaux.  
+
+Les professions libérales, et les cadres supérieurs est la ligne qui contribue le plus la création du premier axe. Les professions libérales et cadres supérieurs et les professions intermédiaires sont très bien représentés sur le premier axe. Les ouvriers qualifiés sont bien représentés sur le premier axe. Les professions libérales et cadres supérieurs et les professions intermédiaires sont inversement corrélées aux ouvriers qualifiés.  
+
+Pour les lignes supplémentaires, le supérieur est très bien représenté sur l'axe 1. Les hommes, les femmes, les personnes entre 35 et 49 ans et la primaire sont bien représentés. Les hommes, les personnes entre 35 et 49 ans et le supérieur sont inversement corrélés avec les femmes et la primaire.  
+
+Sur l'axe 2 : Les quotidiens Régionaux, la Presse Magazine et la Presse Magazine T.V. sont les colonnes qui contribuent le plus à la création de la seconde composante principale. La Presse Magazine T.V. est très bien représentée. Les quotidiens Régionaux et la Presse Magazine sont biens représentés. La Presse Magazine T.V. est inversement corrélée avec les quotidiens Régionaux et la Presse Magazine.  
+Les agriculteurs, les employés est les ouvriers qualifiés sont les professions contribuant le plus à la création de l'axe 2. Les agriculteurs, les petits patrons, les employés et les ouvriers qualifiés sont bien représentés sur l'axe 2. Les agriculteurs et les petits patrons sont inversement corrélés aux employés et aux ouvriers qualifiés.  
+
+Pour les lignes supplémentaires, les 15-24 ans, les 25-34 ans, les 50-64 ans, les 65 ans ou plus et le secondaire sont bien représentés sur le second axe. Les 15-24 ans, les 25-34 ans et le secondaire sont inversement corrélés aux 50-64 ans, et aux 65 ans ou plus.
+
+## Question 6 : Projeter dans le premier plan factoriel les lignes actives et les colonnes actives et interpréter
+```{r}
+plot.CA(donnees.ca, axes=c(1,2), invisible = "row.sup")
+```
+  
+Les ouvriers non-qualifiés, les ouvriers qualifiés, les employés sont corrélés. Ils ont plus tendance à consulter la presse magazine T.V., la radio ou le téléphone. Les professions intermédiaires ont un profil qui se rapproche de la qualité d'employé, ils sont corrélés avec la radio. Les inactifs sont plus succeptible d'utiliser le téléphone et la radio. Les professions libérales et les cadres supérieurs sont peu corrélés avec les autres types de profession. Ils sont corrélés avec les quotidiens nationaux. Les petits patrons sont sont bien corrélés avec les quotidiens régionnaux. Les agriculteurs sont quant à eux peu corrélés avec d'autres types de profession et les médias.  
+
+## Question 7 : Projeter dans le premier plan factoriel les lignes supplémentaires et interpréter
+```{r}
+plot.CA(donnees.ca, axes=c(1,2), invisible = c("row"))
+```
+  
+Le niveau primaire, et les 50 ans et + sont corrélés. Le secondaire, et les 15-49 ans sont corrélés. Le suppérieur est aberrant sur l'axe 1, il n'est pas corrélé avec d'autre type de personne. Le TECP se rapproche des 25-34 ans. Les hommes et femmes sont inversement corrélés sur les 2 axes. Les hommes sont corrélés avec les 35-49 ans tandis que les femmes sont corrélés avec le secondaire. Le supérieur est à mis chemin avec le groupe et les quotidiens nationaux (presque des cadres ?). Le TECP est très corrélé avec la presse magazine T.V.. La radio et le téléphone sont corrélés avec les femmes, les hommes, le secondaire et les 35-49 ans. Les 50-64 ans sont ceux qui se rapproche le plus de la presse magazine. Ils se rapproche aussi des Quotidiens régionnaux avec les 65 ans ou +.
+
+
+

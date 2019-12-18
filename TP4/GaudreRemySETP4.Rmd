@@ -1,0 +1,93 @@
+---
+title: "GaudreRemySETP4"
+author: "Rémy Gaudré"
+date: "08/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Importation des données
+```{r, echo=T}
+mydata=read.table("Race-canine.txt",sep="\t", head=T,encoding = "latin1", colClasses = "factor" )
+## encoding pour lire les accents
+##head(mydata)
+```
+```{r}
+rownames(mydata)<-mydata$Race
+mydata<-mydata[,-1]
+#head(mydata)
+```
+```{r, include= F}
+library(plyr)
+library(philentropy)
+library(FactoMineR)
+library(factoextra)
+library(ggplot2)
+```
+## Classification Ascendante Hiérarchique à 4 facteurs
+```{r, include= F ,echo=FALSE}
+mydata.mca = MCA(mydata,quali.sup=7,ncp=4)
+hcpc=HCPC(mydata.mca,nb.clust=4,proba=1)
+hcpc$call$t$inert.gain
+```
+```{r}
+tab1=hcpc$call
+plot(hcpc,choice="bar")
+plot(hcpc,choice="tree")
+plot(hcpc,choice="map",draw.tree = F)
+plot(hcpc,choice="3D.map")
+```
+```{r,include=F}
+png("plot11.png", height=1200, width=1200, res=250, pointsize=8)
+plot(hcpc,choice="bar")
+dev.off()
+png("plot12.png", height=1200, width=1200, res=250, pointsize=8)
+plot(hcpc,choice="tree")
+dev.off()
+png("plot13.png", height=1200, width=1200, res=250, pointsize=8)
+plot(hcpc,choice="map",draw.tree = F)
+dev.off()
+png("plot14.png", height=1200, width=1200, res=250, pointsize=8)
+plot(hcpc,choice="3D.map")
+dev.off()
+```
+```{r}
+#mydata.mca = MCA(mydata,quali.sup=7,ncp=10)
+#hcpc=HCPC(mydata.mca,nb.clust=6)
+tab2=hcpc$call
+```
+```{r}
+hcpc$data.clust
+hcpc$desc.ind
+hcpc$desc.var
+```
+```{r}
+pl1=fviz_cluster(hcpc, ellipse=F)
+fviz_add(pl1,mydata.mca$quali.sup$coord)
+```
+```{r}
+mydata1<-cbind(mydata,hcpc$call$X[,5][match(rownames(mydata), rownames(hcpc$call$X))])
+colnames(mydata1)<-c(colnames(mydata),"Classe")
+```
+```{r}
+ par(mfrow=c(3,4))
+for( i in 1:4)
+{for (j in 1:7)
+{ cl = as.data.frame(mydata1[which(mydata1["Classe"]==i),])
+barplot(table(factor(cl[,j]))/sum(table(factor(cl[,j]))), main= paste("classe ", as.character(i), colnames(cl)[j]))}
+}
+```
+```{r,include=F}
+library(xlsx)
+write.xlsx(hcpc$data.clust,file="TP4-4facteurs-RC.xlsx",sheetName="clust")
+for (i in 1:4)
+{
+ write.xlsx(hcpc$desc.axes$quanti[i],file="TP4-4facteurs-RC.xlsx",sheetName=paste("axe",as.character(i)),append=T)
+ write.xlsx(hcpc$desc.var$category[i],file="TP4-4facteurs-RC.xlsx",sheetName=paste("var",as.character(i)),append=T)
+ write.xlsx(hcpc$desc.ind$para[i],file="TP4-4facteurs-RC.xlsx",sheetName=paste("distances",as.character(i)),append=T)
+}
+#write.xlsx(poids,file="TP4.xlsx",sheetName="",append=T)
+```

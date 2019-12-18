@@ -1,0 +1,132 @@
+---
+title: "Rapport de la quatrième partie du TP4 de statistique exploratoire"
+author: "Rémy Gaudré"
+date: "17/10/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(FactoMineR)
+library(Hmisc)
+library(knitr)
+library(ggplot2)
+library(psych)
+```
+
+## Présentation des données
+```{r}
+donnees = read.csv("../notes_eleves.csv",header = TRUE,sep=";", dec=",")
+rownames(donnees)<-donnees$Race
+donnees<-donnees[,-1]
+describe(donnees)
+```
+Les données sont composées de notes de 27 élèves dans 14 matières. Les variables sont toutes quantitatives continues. Les données sont toutes comprises entre 0 et 20. Les moyennes de la Grammaire, de l'Expression Ecrite, d'Histoire, de Biologie, d'Arts-Plastique sont en dessous de 10. Les autres matières ont une moyenne au dessus de 10. Les écarts types sont tous en dessous de 5. Les notes sont toute-fois diversifiés en regardant les minimums et les maximums. Les notes pouvant être très mauvaises comme très bonnes. La matière la plus réussi en regardant les données brut étant l'éducation musicale avec une moyenne de 15.59 une note minimal de 7 et maximale de 19.
+
+## Partie A1 : réalisation de l'ACP
+```{r}
+donnees.pca = PCA(donnees,scale.unit=TRUE,ncp=6,graph=FALSE)
+```
+
+Combien de composantes principales peut-on retenir ?
+```{r}
+# Nombre de composantes principales
+kable(donnees.pca$eig)
+
+barplot(donnees.pca$eig[, 2], 
+        names.arg = 1:nrow(donnees.pca$eig), 
+        main = "La variances expliquée pas les composantes principales (%)",
+        xlab = "Composantes Principales",
+        ylab = "Pourcentage de la variance",
+        col ="steelblue")
+
+```
+  
+D'après le critère des 80% de variance expliquée : nous avons 6 composantes principales à retenir.  
+Le critère du coude nous indique un premier palier à partir de la troisième composante principale et une chute au sixième axe.
+D'après le critère de Kaiser, nous avons 5 composantes principales à retenir.
+
+## Partie A2 : Réalisation de la classification Ascendante Hiérarchique
+```{r}
+hcpc=HCPC(donnees.pca,nb.clust=-1,proba=1,graph = FALSE)
+donnees1<-cbind(donnees,hcpc$call$X[,7][match(rownames(donnees), rownames(hcpc$call$X))])
+colnames(donnees1)<-c(colnames(donnees),"Classe")
+plot(hcpc,choice="bar")
+```
+Le nombre de classe optimale est 3.
+```{r}
+plot(hcpc,choice = "tree")
+plot(hcpc,choice = "map",draw.tree = FALSE)
+```
+
+```{r}
+stat = table(donnees1$Classe)
+pie(table(donnees1$Classe),col=c("blue","Green","red"), main = "Répartition des élèves selon les classes",cex = 1.5)
+text_pie = function(vector,labels=c(),cex=1) {
+     vector = vector/sum(vector)*2*pi
+     temp = c()
+     j = 0
+     l = 0
+     for (i in 1:length(vector)) {
+          k = vector[i]/2        
+          j =  j+l+k
+          l = k
+          text(cos(j)/2,sin(j)/2,labels[i],cex=cex)
+     }
+     vector = temp
+}
+text_pie(table(donnees1$Classe),c("25.92%","62.96%","11.11%"),cex = 1)
+```
+  
+La classe la plus représenté par les élèves est la classe numéro 2 avec plus de la moitié des élèves y appartenant (62.96%). La classe numéro 1 contient 25,92% des élèves et la classe numéro 3 est en minorité avec 11,11% des élèves.  
+
+
+### Etude des élèves  
+
+
+```{r}
+kable(subset(hcpc$desc.var$quanti$`1`,hcpc$desc.var$quanti$`1`[,6]<=0.05), caption = "Les matières significatives de la classe 1")
+```
+  
+Les élèves de la classe 1 ont en général des notes inférieures au reste de la classe. Ils ont des notes en dessous de la moyenne en Exposé, en Géographie, en Biologie, en Expression écrite, en Art plastique et en Education musicale de façon significative. Les matières étant les plus significatives sont l'Education musicale, l'Art plastique, et l'Expression écrite.
+
+```{r}
+kable(subset(hcpc$desc.var$quanti$`2`,hcpc$desc.var$quanti$`2`[,6]<=0.05), caption = "Les matières significatives de la classe 2")
+```
+  
+Les élèves de la classe 2 sont généralement des élèves ayant des bonnes notes en Biologie, en Education musicale, en Géographie, en Art plastique, en EPS, en Récitation, et en Exposé de façon significative. Ils ont cependant des lacunes en Grammaire de façon significative. Les matières étant les plus significative de cette classe sont la Biologie et l'Education musicale. Ces élèves sont donc bons dans 7 matières et mauvais dans 1 seule. Les autres matières s'approche plus de la moyenne de classe.
+```{r}
+kable(subset(hcpc$desc.var$quanti$`3`,hcpc$desc.var$quanti$`3`[,6]<=0.05), caption = "Les matières significatives de la classe 3")
+```
+  
+Les élèves de la classe 3 sont généralement des élèves littéraires. Ils sont bons en Grammaire, en Expression, en Anglais, en Math, en Histoire et en Orthographe. Les matières les plus significatives de la classe sont la Grammaire, l'Expression écrite et l'Anglais.
+
+
+### Etude des axes de l'ACP  
+
+```{r}
+kable(subset(hcpc$desc.axes$quanti$`1`,hcpc$desc.axes$quanti$`1`[,6]<=0.05), caption = "Les axes significatifs de la classe 1")
+```
+  
+Les élèves de la première classe ont en moyennes des valeurs faibles dans les 2 premières composantes principales de l'ACP de façon significative. La première composante principale est la plus significative.
+
+```{r}
+kable(subset(hcpc$desc.axes$quanti$`2`,hcpc$desc.axes$quanti$`2`[,6]<=0.05), caption = "Les axes significatifs de la classe 2")
+```
+  
+Les élèves de la seconde classe ont en moyenne des valeurs élevées dans la seconde dimension de l'ACP de façon significative.
+
+```{r}
+kable(subset(hcpc$desc.axes$quanti$`3`,hcpc$desc.axes$quanti$`3`[,6]<=0.05), caption = "Les axes significatifs de la classe 3")
+```
+  
+Les élèves de la troisième classe ont des valeures élevés dans la première dimension et faible dans la seconde dimension de l'ACP de façon significative. La première composante principale est la plus significative.  
+
+
+## Conclusion de la classification ascendante hiérarchique
+Pour rappel : on a conclu l'ACP en déterminant que le premier axe de l'ACP déterminait caractérise le niveau de l'élève et le second axe le profil des matières que l'élève réussi le mieux.
+Les élèves sont réparti dans 3 classes. La première classe contient un quart des élèves. Les élèves de cette classe ont en moyenne des notes assez faibles en Exposé, en Géographie, en Biologie, en Expression écrite en Art Plastique et en Education musicale. Ils ont sont aussi caractérisés par des valeures faibles sur les 2 premiers axes de l'ACP. Les élèves de la première classe sont en général en difficulté.  
+Les élèves de la seconde classe sont en moyenne bons en biologie, en éducation musicale, en géographie en art plastique, en EPS, en récitation et en exposé. Ils sont cependant mauvais en grammaire en moyenne. Ils sont aussi caractérisé par une forte valeur sur l'axe 2 de l'acp. C'est élèves sont bons dans 7 des 14 matières et mauvais dans 1 seule. Cette classe représente la majorité des élèves (63% de la classe).
+Les élèves de la troisième classe ont en moyenne des bonnnes notes en grammaire, en expression, en anglais, en mathématique, en histoire et en orthographe. Ils ont donc un profil plus "littéraire". Ce qui est confirmé par la bonne valeure moyenne sur l'axe 1 et la faible valeure moyenne sur l'axe 2 de l'ACP. Ils sont plus atypique car seulement 11,11% des élèves sont dans cette classe.
+

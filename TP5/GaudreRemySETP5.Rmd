@@ -1,0 +1,89 @@
+---
+title: "Rapport du TP5 de statistique exploratoire"
+author: "Rémy Gaudré"
+date: "18/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(DiscriMiner)
+library(knitr)
+library(rrcov)
+library(klaR)
+library(heplots)
+```
+## Importation des données
+```{r, echo=F}
+donnees=read.table("Vin_bordeaux.csv",sep=";", head=T,encoding = "latin1")
+## encoding pour lire les accents
+head(donnees)
+```
+
+## 1. Tracer et analyser les boîtes à moustaches de chacune des variables explicatives par rapport aux modalités de la variable de groupe "qualité des vins"
+
+```{r}
+boxplot(data = donnees, temp~Qualite)
+boxplot(data = donnees, inso~Qualite)
+boxplot(data = donnees, chal~Qualite)
+boxplot(data = donnees, pluie~Qualite)
+```
+On observe que :  
+
+* plus la somme des températures moyenne journalière dimininue plus la qualité des vins a tendance à être mauvaise.
+* plus la durée d'insolation diminue, plus la qualité qualité des vins a tendance à être mauvaise.
+* plus le nombre de jour de grande chaleur diminue, plus la qualité des vins a tendance à être mauvaise.
+* plus la hauteur des pluies augmente, plus la qualité des vins a tendance à être mauvaise.
+
+## 2. Estimer le pouvoir discriminant de chacune des variables explicatives par rapport à la variable Qualité des vins : Le rapport de la variance inter-classes (variance expliquée) sur variance totale.
+
+```{r}
+kable(discPower(donnees[,2:5],donnees$Qualite), caption = "Tableau d'analyse du pouvoir discriminant de chaque variable explicative sur la qualité des vins")
+```
+  
+Le test d'hypothèse teste la significativité du rapport de correlation :  
+
+- $H_0$ : "Le rapport de correlation est égal à 1"  
+- $H_1$ : "Le rapport de correlation est inférieur à 1".  
+
+Le test statistique est donc un test d'égalité des variances. On observe que toutes les p-value sont inférieures à 5% : les tests sont tous significatifs. Les plus intéressant sont ceux qui concerne les variables temp et inso. Les variables temp et inso ont donc le plus grand pouvoir discriminant sur la variable qualité des vins.
+
+## 3. Tester l'égalité des moyennes de chacune des variables explicatives à traver les groupes de la variable dépendante. (Test de Lambda de Wilks) On posera convenablement les hypothèses nulle et alternative.
+```{r}
+Wt = greedy.wilks(donnees[,2:5],donnees$Qualite,niveau = 1)
+Wt$formula
+kable(Wt$results)
+```
+  
+  
+## 4. Tester l'égalité des matrices de variance-covariance de chacun des groupes de la variable dépendante. (Test de BOX de l'égalité des matrices de covariances) On posera convenablement les hypothèses nulle et alternative.
+```{r}
+a=boxM(donnees[,2:5],donnees$Qualite)
+a
+```
+Ce test compare les matrice de variance-covariances de chacun des groupes de la variable dépendante. Les hypothèses sont les suivantes :
+  
+- $H_0$ : "Les matrices de variance-covariance sont égales"
+- $H_1$ : "Au moins une des matrices de variance-covariance ne sont pas égales"
+
+La p-value de ce test est égale à 0.2311. On accepte donc $H_0$ les variances ne sont pas significativement différentes.
+
+## 5. Analyse discriminante linéaire (ou Analyse Factorielle Discriminante)
+```{r}
+afd = lda(Qualite ~ ., data = donnees[,2:6])
+afd
+afd$
+```
+### Combien de facteur discriminant peut-on construire ?
+Nous pouvons construire 2 facteurs discriminants sous l'hypothèse de l'inversibilité des matrices de variance-covariance.
+
+### Estimer le pouvoir discriminant de chacun des facteurs issus de l'AFD
+```{r}
+
+```
+
+```{r}
+pred.afd <- predict(afd,newdata=donnees[,2:5])
+mc.afd <- table(donnees$Qualite,pred.afd$class)
+mc.afd
+```

@@ -1,0 +1,85 @@
+---
+title: 'Rapport de l''exercice du TP3 de statistique exploratoire : Analyse des Correspondances Multiples'
+author: "Rémy Gaudré"
+date: "04/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(FactoMineR)
+```
+
+## Question 1 : Importer la base de données sous R
+```{r}
+donnees = read.csv("Race-canine.txt",header = TRUE,sep="\t", colClasses = "factor")
+row.names(donnees)=donnees[,1]
+donnees = donnees[,-1]
+```
+
+## Question 2 : Mettre en oeuvre l'ACM en utilisant les colonnes actives
+```{r}
+donnees.mca = MCA(donnees,graph = FALSE, quali.sup = 7:7)
+```
+
+## Question 3 :  En utilisant le critère d'inertie moyenne, combien d'axes principaux peut-on retenir ?
+```{r}
+donnees.mca$eig
+mean(donnees.mca$eig[,1])
+```
+D'après le critère d'inertie moyenne, nous retenons 3 composantes principales.(inertie moyenne = 0.1666)
+
+## Question 4 : Interpréter les axes retenus par rapport aux modalités des variables actives.
+```{r}
+round(subset(donnees.mca$var$contrib[,1],donnees.mca$var$contrib[,1]>mean(donnees.mca$var$contrib[,1])),3)
+round(subset(donnees.mca$var$contrib[,2],donnees.mca$var$contrib[,2]>mean(donnees.mca$var$contrib[,2])),3)
+round(subset(donnees.mca$var$contrib[,3],donnees.mca$var$contrib[,3]>mean(donnees.mca$var$contrib[,3])),3)
+```
+La contribution moyenne est de 6.25%. Une variable contribue à la création d'un axe lorsque sa contribution à cet axe dépasse 6.25%.
+Sur l'axe 1, Taille_1, Taille_3, Poids_1, Velocite_3, Affection_1 et Affection_2 contribuent à la création.
+Sur l'axe 2, Taille_1, Taille_2, Poids_1, Poids_2, Poids_3, Velocite_1, Velocite_2 et Intelligence_1 contribuent à la création.
+Sur l'axe 3, Taille_1, Taille_2, Poids_3, Velocite_3, Intelligence_2 et Intelligence_3 contribuent à la création.
+
+```{r}
+round(subset(donnees.mca$var$cos2[,1],donnees.mca$var$cos2[,1]>= 0.3),3)
+round(subset(donnees.mca$var$cos2[,2],donnees.mca$var$cos2[,2]>= 0.3),3)
+round(subset(donnees.mca$var$cos2[,3],donnees.mca$var$cos2[,3]>= 0.3),3)
+```
+Une modalité est considérée comme bien représentée à partir si cos² >= 0.3.
+Sur la première dimension, Taille_1, Taille_3, Poids_1, Velocite_3, Affection_1 et Affection_2 sont bien représentées.
+Sur la seconde dimension, Taille_2, Poids_2, Velocite_1 et Velocite_2 sont bien représentées.
+Sur la troisième dimension, aucune modalité est bien représentée.
+
+```{r}
+round(donnees.mca$var$coord[,1:3],3)
+```
+Sur l'axe 1 : Taille_1, Poids_1 et Affection_1 sont inversement corrélées à Taille_3, Velocite_3 et Affection_2.  
+Sur l'axe 2 : Taille_2, Poids_2 et Velocite_2 sont inversement corrélées à Taille_1, Poids_1, Poids_3, Velocite_1 et Intelligence_1.  
+Sur l'axe 3 : Taille_2, Poids_3 et Intelligence_2 sont inversement corrélées à Taille_1, Velocite_3 et Intelligence_3.  
+
+## Question 5 : Interpréter les axes retenus par rapport aux individus (les races canines).
+
+```{r}
+round(subset(donnees.mca$ind$contrib[,1],donnees.mca$ind$contrib[,1]>mean(donnees.mca$ind$contrib[,1])),3)
+round(subset(donnees.mca$ind$contrib[,2],donnees.mca$ind$contrib[,2]>mean(donnees.mca$ind$contrib[,2])),3)
+round(subset(donnees.mca$ind$contrib[,3],donnees.mca$ind$contrib[,3]>mean(donnees.mca$ind$contrib[,3])),3)
+```
+Sur l'axe 1 : BULD, BULM, CANI, CHIH, COCK, DOBE, DA.L, FX.H, FX.T, MAST, PEKI, TECK contribuent à la création de l'axe.  
+Sur l'axe 2 : BASS, BOXE, CHIH, DAL, E.BR, LABR, MAST, PEKI, ST-B contribuent à la création de l'axe.  
+Sur l'axe 3 : BEAU, B.AL, BOXE, CANI, CHIH, COCK, DAL, LABR, MAST, PEKI, POIN, ST-B,T.NE contribuent à la création de l'axe.  
+
+```{r}
+round(subset(donnees.mca$ind$cos2[,1],donnees.mca$ind$cos2[,1]>= 0.3),3)
+round(subset(donnees.mca$ind$cos2[,2],donnees.mca$ind$cos2[,2]>= 0.3),3)
+round(subset(donnees.mca$ind$cos2[,3],donnees.mca$ind$cos2[,3]>= 0.3),3)
+```
+Sur l'axe 1 : BULD, CANI, CHIH, DOBE, DA.L, FX.H, FX.T, LEVR, PEKI, POIN, TECK sont bien représentés.  
+Sur l'axe 2 : BASS, BOXE, CHIH, DAL, E.BR, LABR, MAST, PEKI sont bien représentés.  
+Sur l'axe 3 : ST-B, T.NE sont bien représentés.
+
+```{r}
+round(donnees.mca$ind$coord[,1:3],3)
+```
+Sur l'axe 1 : BULD, CANI, CHIH, FX.T, PEKI et TECK sont inversement corrélés avec DOBE, DA.L, FX.H, LEVR, et POIN.
+Sur l'axe 2 : BASS, CHIH, MAST et PEKI sont inversement corrélés avec BOXE, DAL, E.BR et LABR.
+Sur l'axe 3 : ST-B et T.NE sont corrélés.

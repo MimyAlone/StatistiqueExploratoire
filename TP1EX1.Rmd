@@ -1,0 +1,83 @@
+---
+title: 'Rapport du TP1 de statistique Exploratoire : Analyse en Composante Principales
+  Normée'
+author: "Rémy Gaudré"
+date: "10 septembre 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##Question 1
+```{r}
+donnees = read.csv("donneepub.csv",header = TRUE,sep="\t", dec=",")
+```
+##Question 2
+```{r}
+summary(donnees)
+```
+##Question 3
+```{r}
+R = cor(donnees[-1])
+print(R)
+
+library(Hmisc)
+P = rcorr(as.matrix(donnees[-1]))$P
+print(P)
+```
+
+##Question 4 : ACP
+###a. ACP
+```{r}
+library("FactoMineR")
+res.pca <- PCA(donnees[-1], graph = FALSE)
+```
+###b.Combien de composantes principales retenir ?
+```{r}
+eig.val <- res.pca$eig
+barplot(eig.val[, 2], 
+        names.arg = 1:nrow(eig.val), 
+        main = "La variances expliquée pas les composantes principales (%)",
+        xlab = "Composantes Principales",
+        ylab = "Pourcentage de la variance",
+        col ="steelblue")
+eig.val
+```
+Pour avoir au moins 80% de la variance qui soit expliqué, on garde les 3 premières composantes.
+
+###c.coordonnées, corrélations, cosinus carrés, et contributions de chaque variables
+```{r}
+res.pca$var
+```
+
+###d.Interpreter les composantes retenues par rapport au médias publicitaires.
+```{r}
+res.pca$var$contrib
+```
+Les variables newspaper, magazine et tv contribuent le plus à la formation de la première composante principale.
+Les variables cinéma et Outdoor/Transport contribuent le plus à la seconde composante principale.
+Les variables radio et cinéma contribuent le plus à la troisième composante principale.
+```{r}
+res.pca$var$cos2
+```
+La variable newspaper et tv sont très bien représentées sur la première composante principale.
+La variable magasine est représentée à moitié par la première composante principale.
+Les autres variables sont mal représentées par la première composante principale.
+Les variables cinéma et Outdoor/Transport sont bien représentées par la seconde composante principale.
+Les autres variables sont mal représentées sur la seconde composante principale.
+La variable radio est bien représentée sur la troisième composante principale, les autres mal.
+
+
+
+```{r}
+res.pca$var$coord
+```
+Newspaper est opposé en signe par rapport à magasine et tv sur la première composante principale.
+
+```{r}
+plot(res.pca, axes=c(1,2),choix = "var")
+plot(res.pca, axes=c(1,3),choix = "var")
+plot(res.pca, axes=c(2,3),choix = "var")
+help(plot)
+```

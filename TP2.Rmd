@@ -1,0 +1,83 @@
+---
+title: 'Rapport du TP2 de Statistique Exploratoire : Analyse Factorielle des correspondances'
+author: "Rémy Gaudré"
+date: "20/09/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Hmisc)
+library(FactoMineR)
+```
+
+## Première partie : importation des données
+```{r}
+donnees = read.csv("dataTP2.csv",header = TRUE,sep=";", dec=".")
+```
+
+## Seconde partie : mettre en oeuvre la méthode AFC
+### Statistique descriptive
+```{r}
+summary(donnees)
+```
+Les données se compose d'un tableau de contingence entre les variables marque et appréciation.
+### Coefficients de corrélation
+```{r}
+rcorr(as.matrix(donnees[-1]))
+```
+Les modalités sont considérées comme significativement corrélées si la p-value < 0.05.  
+Voici les différentes corrélation que l'on peut retrouver :  
+
+* ORLY - ICAR : p-value = 0.0004 et r² = -0.88
+* DIRE - ESCA : p-value = 0.0496 et r² = -0.60
+* ICAR - ZODI : p-value = 0.0199 et r² = 0.69
+* ICAR - PAVI : p-value = 0.0429 et r² = -0.62
+* ZODI - COCK : p-value = 0.0164 et r² = 0.70  
+
+### AFC
+```{r}
+donnees.ca = CA(donnees[-1],ncp=4,graph=FALSE)
+```
+## Troisième partie : Analyse des résultats
+### Combien d'axes peut-on retenir et pourquoi ?
+```{r}
+# Nombre de composantes principales
+donnees.ca$eig
+
+barplot(donnees.ca$eig[, 2], 
+        names.arg = 1:nrow(donnees.ca$eig), 
+        main = "La variances expliquée pas les composantes principales (%)",
+        xlab = "Composantes Principales",
+        ylab = "Pourcentage de la variance",
+        col ="steelblue")
+mean(donnees.ca$eig[,1])
+```
+Selon le critère des 80% de variance expliquée : il faut garder au moins les 4 premières composantes principales, car le pourcentage de variance expliquée cumulée des 4 premières composantes principales est de 82.50%.
+Selon le critère de Kaiser, (la moyenne des valeur propres étant de 0.05) le nombre d'axes à retenir est de 5. 
+### Interpréter les 4 premiers axes en fonction des marques
+Analyse de la contribution :
+```{r}
+donnees.ca$col$contrib
+```
+La contribution moyenne est de 100/12 = 8.3333. Les variables ayant une contribution supérieure à la moyenne participe plus à la création de l'axe.
+
+Sur la première dimension : ORLY, CORS, ZODI et HOTE contribuent à la création de l'axe.  
+Sur la seconde dimension : DIRE, ESCA et HOTE contribuent à la création de l'axe.  
+Sur la troisième dimension : ALEZ, DIRE, COCK contribuent à la création de l'axe.  
+Sur la quatrième dimension : ALEZ, CORS, ZODI, et COCK contribuent à la création de l'axe.  
+
+Analyse de la qualité de représentation (cos²):
+```{r}
+donnees.ca$col$cos2
+```
+Les modalités sont considérées comme bien représenté lorsque cos²>= 0.4 et très bien représenté pour cos²>=0.7, sinon elles sont considérées comment mal représentées sur l'axe.  
+Sur la première dimension : ORLY, CORS, FONT et ZODI sont bien représentées.
+Sur la seconde dimension : DIRE, HOTE sont bien représentées et ESCA est très bien représenté.
+Sur la troisième dimension : ALEZ est bien représenté.
+Sur la quatrième dimension, aucune modalité est bien représentée.
+
+Analyse des coordonnées :
+```{r}
+donnees.ca$col$coord
+```

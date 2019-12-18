@@ -1,0 +1,31 @@
+---
+title: "Exercice de cours"
+author: "Rémy Gaudré"
+date: "02/10/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+help(matrix)
+m = matrix(data = c(2,5,2,1,0,0,1,4,3,1),nrow = 5, ncol = 2)
+m
+X  = prop.table(m)
+Y = matrix(,nrow = 5, ncol = 2)
+for(i in 1:5)
+  for(j in 1:2)
+    Y[i,j] = X[i,j] / sqrt(sum(X[i,]) * sum(X[,j]))
+Y
+
+R = t(Y) %*% Y
+R
+
+Z = Y %*% t(Y)
+Z
+
+eigen(R)
+eigen(Z)
+```
